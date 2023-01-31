@@ -4,11 +4,14 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
-class Negatyw extends Thread{
+// Tworzenie klasy negatyw, która rozszerza klasę Thread
+class negatyw extends Thread{
+    // Pola przechowujące obraz i zakres pikseli do przetworzenia przez wątek
     BufferedImage pobierz_obraz;
     int xStart, yStart, xStop, yStop;
 
-    public Negatyw( BufferedImage obraz, int x_start, int x_stop, int y_stop, int y_start ){
+    // Konstruktor, przyjmujący obraz i zakres pikseli do przetworzenia
+    public negatyw( BufferedImage obraz, int x_start, int x_stop, int y_stop, int y_start ){
         this.xStart = x_start;
         this.yStart = y_start;
         this.xStop = x_stop;
@@ -16,56 +19,70 @@ class Negatyw extends Thread{
         this.pobierz_obraz = obraz;
     }
 
+    // Metoda run() z klasy Thread, w której wykonywana jest główna operacja
     @Override
     public void run() {
+        // Pętla po wszystkich pikselach w zakresie przekazanym do konstruktora
         for(int i = xStart; i < xStop; i++){
             for(int j = yStart; j < yStop; j++) {
+                // Pobieranie koloru piksela
                 Color c = new Color(pobierz_obraz.getRGB(i, j));
+                // Pobieranie składowych R, G, B
                 int red = c.getRed();
                 int green = c.getGreen();
                 int black = c.getBlue();
+                // Obliczanie składowych koloru odwróconego
                 int R, G, B;
                 R = 255 - red;
                 G = 255 - green;
                 B = 255 - black;
+                // Tworzenie obiektu koloru o odwróconych składowych
                 Color newColor = new Color(R, G, B);
+                // Ustawianie odwróconego koloru jako koloru piksela
                 pobierz_obraz.setRGB(i, j, newColor.getRGB());
             }
         }
     }
 
 }
-
 class LAB3_Negatyw {
+public static void main(String[] args) throws IOException {
+    // Odczyt pliku obrazu i utworzenie obiektu BufferedImage
+    BufferedImage image;
+    File input = new File("zdj.jpg");
+    image = ImageIO.read(input);
 
-    public static void main(String[] args) throws IOException {
-        BufferedImage image;
+    // Pobieranie szerokości i wysokości obrazu
+    int width = image.getWidth();
+    int height = image.getHeight();
 
-        File input = new File("zdj.jpg");
-        image = ImageIO.read(input);
-        int width = image.getWidth();
-        int height = image.getHeight();
-        int wField = width / 2;
-        int hField = height / 2;
+    // Dzielenie obrazu na 4 równe części
+    int wField = width / 2;
+    int hField = height / 2;
 
-        Negatyw t1, t2, t3, t4;
-        t1 = new Negatyw(image, 0, 0, wField, hField);
-        t2 = new Negatyw(image, wField, 0, width, hField);
-        t3 = new Negatyw(image, 0, hField, wField, height);
-        t4 = new Negatyw(image, wField, hField, width, height);
+    // Tworzenie instancji klasy negatyw dla każdej części obrazu
+    negatyw t1, t2, t3, t4;
+    t1 = new negatyw(image, 0, wField,hField,0);
+    t2 = new negatyw(image, wField, width, height, hField);
+    t3 = new negatyw(image, 0, wField, height, hField);
+    t4 = new negatyw(image, wField, width, hField, 0);
 
-        t1.start();
-        t2.start();
-        t3.start();
-        t4.start();
+    // Uruchomienie wszystkich wątków
+    t1.start();
+    t2.start();
+    t3.start();
+    t4.start();
 
-        try {
-            t1.join();
-            t2.join();
-            t3.join();
-            t4.join();
-        } catch (Exception e) { }
-        File ouptut = new File("zdj_negatyw.jpg");
-        ImageIO.write(image, "jpg", ouptut);
-    }
+    // Oczekiwanie na zakończenie pracy wszystkich wątków
+    try {
+        t1.join();
+        t2.join();
+        t3.join();
+        t4.join();
+    } catch (Exception e) { }
+
+    // Zapis zmodyfikowanego obrazu do nowego pliku
+    File ouptut = new File("zdj_negatyw.jpg");
+    ImageIO.write(image, "jpg", ouptut);
+}
 }
